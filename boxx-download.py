@@ -114,6 +114,7 @@ def get_item_download_pages(browser: webdriver) -> [(str, str)]:
     # THE FILES ASSOCIATED WITH THE PURCHASE.
     #
     # GET THE URLS FOR EACH OF THOSE PAGES
+    print("  Reading purchased items available for download.")
     elems = browser.find_elements(By.TAG_NAME, "a")
     for elem in elems:
         href = elem.get_attribute('href')
@@ -547,7 +548,7 @@ def filter_items(all_item_pgs: [(str, str)], valid_items: [str]) -> [(str,str)]:
     param valid_items: list of items the user wants to download
     return:  A list with only items in both lists
     """
-    if len(valid_items) == 0:
+    if len(valid_items) == 1 and valid_items[0] is None:
         return all_item_pgs
 
     filtered_list = []
