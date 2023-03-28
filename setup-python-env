@@ -1,0 +1,13 @@
+#!/bin/bash
+
+# UNCOMMENT THIS LINE TO INSTALL PYTHON 3.10 VENV
+# sudo apt install python3.10-venv
+
+# CREATE NEW VIRTUAL ENVIRONMENT
+mkdir venv
+cd venv
+python -m venv .
+cd ..
+
+pip install selenium
+

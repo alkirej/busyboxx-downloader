@@ -1,0 +1,9 @@
+boxx-download
+
+*.out
+*.err
+*.log
+*.iml
+
+.idea/
+venv/
