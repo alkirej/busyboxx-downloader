@@ -355,7 +355,9 @@ def build_save_location(boxx_site: str, item_name: str, save_file: str) -> str:
     dst_dir = get_save_dir(boxx_site, item_name)
 
     # REMOVE PROBLEMATIC CHARACTERS FROM FILENAMES.
-    clean_save_file = save_file.replace("%", "")
+    clean_save_file = save_file.replace("%", "")\
+                            .replace("/", "")\
+                            .replace("\\", "")
 
     # RETURN THE FULL PATH TO STORE THE FILE
     return os.path.join(dst_dir, clean_save_file) + file_ext
