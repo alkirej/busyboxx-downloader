@@ -211,12 +211,11 @@ def clean_download_dir() -> None:
         pass
 
 
-def process_download(browser: webdriver, save_to: str, boxx_site: str, save_filename: str) -> None:
+def process_download(save_to: str, boxx_site: str, save_filename: str) -> None:
     """
     Wait for the download to complete, then move the newly downloaded file to
     the destination directory
 
-    param browser: object to interact with the browser
     param save_to: The name of the individual item from the boxx site.
     param boxx_site: Which boxx website is the download from.
     param save_filename: Name to give the file once it is moved.
@@ -247,7 +246,9 @@ def process_download(browser: webdriver, save_to: str, boxx_site: str, save_file
     # THE PERMANENT STORAGE LOCATION WHICH WILL LEAVE THE DOWNLOAD
     # DIRECTORY EMPTY AGAIN.
     else:
-        print(f"      - Moving download to {build_save_location(boxx_site, save_to, save_filename)}")
+        print(f"      - Moving download to \
+                    {build_save_location(boxx_site, save_to, save_filename)}"
+              )
         rename_and_move_dl_file(save_to, boxx_site, save_filename)
 
 
@@ -285,7 +286,7 @@ def download_item_files(browser: webdriver, url: str, boxx_site: str, item_name:
         dl_img.click()
         time.sleep(2)
 
-    # COLLECT THE DOWNLOADS FOR THIS ITEM MEMBER.
+        # COLLECT THE DOWNLOADS FOR THIS ITEM MEMBER.
         item_wrappers = browser.find_elements(By.CLASS_NAME, "DescriptionWrapper")
 
         # SOME OF THE PURCHASES ONLY HAVE A SINGLE FILE FOR EACH
@@ -297,7 +298,8 @@ def download_item_files(browser: webdriver, url: str, boxx_site: str, item_name:
 
             # COLLECT LIST IF FILES TO DOWNLOAD
             for elem in item_wrappers:
-                descr = elem.find_element(By.CLASS_NAME, "ContentInfo").text.lower().replace(" ", "-")
+                descr = elem.find_element(By.CLASS_NAME, "ContentInfo")\
+                            .text.lower().replace(" ", "-")
                 save_filename = f"{ttl}-{cnt_name}-{dur}-{descr}"
                 downloads.append((save_filename, elem))
 
@@ -310,7 +312,7 @@ def download_item_files(browser: webdriver, url: str, boxx_site: str, item_name:
                     # (AKA: MOVE IT TO ITS PERMENANT LOCATION)
                     elem.click()
                     time.sleep(2)
-                    process_download(browser, item_name, boxx_site, filename)
+                    process_download(item_name, boxx_site, filename)
 
                 else:
                     # THE FILE HAS ALREADY BEEN DOWNLOADED.  HOORAY!
@@ -323,7 +325,7 @@ def download_item_files(browser: webdriver, url: str, boxx_site: str, item_name:
             print(f"    Downloading single: {filename} ...")
 
             if not file_exists(boxx_site, item_name, filename):
-                process_download(browser, item_name, boxx_site, filename)
+                process_download(item_name, boxx_site, filename)
 
             else:
                 # FILE PREVIOUSLY DOWNLOADED, SKIP TO NEXT FILE.
@@ -375,8 +377,8 @@ def get_downloaded_filename() -> str:
     # RETURN THE NAME OF THE FIRST FILE FOUND OR NONE IF IT IS EMPTY
     if len(files) > 0:
         return files[0]
-    else:
-        return None
+
+    return None
 
 
 def rename_and_move_dl_file(item_name: str, boxx_site: str, save_name: str) -> None:
@@ -503,9 +505,9 @@ def verify_boxx_site(site: str) -> None:
     if site not in BOXX_SITES:
         # INVALID SITE. PRINT ERROR AND EXIT
         print(f"{site} is not a valid site.")
-        print(f"  Valid sites:")
-        for s in BOXX_SITES:
-            print(f"    {s}")
+        print("  Valid sites:")
+        for valid in BOXX_SITES:
+            print(f"    {valid}")
         print()
         print()
         usage()
