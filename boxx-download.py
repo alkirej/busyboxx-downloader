@@ -246,8 +246,8 @@ def process_download(save_to: str, boxx_site: str, save_filename: str) -> None:
     # THE PERMANENT STORAGE LOCATION WHICH WILL LEAVE THE DOWNLOAD
     # DIRECTORY EMPTY AGAIN.
     else:
-        print(f"      - Moving download to \
-                    {build_save_location(boxx_site, save_to, save_filename)}"
+        print("      - Moving download to " +
+                    f"{build_save_location(boxx_site, save_to, save_filename)}"
               )
         rename_and_move_dl_file(save_to, boxx_site, save_filename)
 
@@ -354,8 +354,13 @@ def build_save_location(boxx_site: str, item_name: str, save_file: str) -> str:
     # GET THE PATH TO STORE THE FILE IN
     dst_dir = get_save_dir(boxx_site, item_name)
 
+    # REMOVE PROBLEMATIC CHARACTERS FROM FILENAMES.
+    clean_save_file = save_file.replace("%", "")\
+                            .replace("/", "")\
+                            .replace("\\", "")
+
     # RETURN THE FULL PATH TO STORE THE FILE
-    return os.path.join(dst_dir, save_file) + file_ext
+    return os.path.join(dst_dir, clean_save_file) + file_ext
 
 
 def get_downloaded_filename() -> str:
