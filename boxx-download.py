@@ -65,7 +65,7 @@ def login(browser: webdriver, boxx_site: str) -> None:
 
     except KeyError:
         print("Could not find environment variable BOXX_USER.")
-        print("  Please set to e-mail address associated with your Boxx account(s).")
+        print("    Please set to e-mail address associated with your Boxx account(s).")
         sys.exit(1)
 
     # ENTER USER'S PASSWORD INTO LOGIN FORM
@@ -77,7 +77,7 @@ def login(browser: webdriver, boxx_site: str) -> None:
 
     except KeyError:
         print("Could not find environment variable BOXX_PW.")
-        print("  Please set to the password associated with your Boxx account(s).")
+        print("    Please set to the password associated with your Boxx account(s).")
         sys.exit(1)
 
     # SIGN USER INTO THE SITE BY CLICKING THE SIGN IN BUTTON
@@ -114,7 +114,7 @@ def get_item_download_pages(browser: webdriver) -> [(str, str)]:
     # THE FILES ASSOCIATED WITH THE PURCHASE.
     #
     # GET THE URLS FOR EACH OF THOSE PAGES
-    print("  Reading purchased items available for download.")
+    print("    Reading purchased items available for download.")
     elems = browser.find_elements(By.TAG_NAME, "a")
     for elem in elems:
         href = elem.get_attribute('href')
@@ -179,7 +179,7 @@ def wait_for_download_to_complete() -> int:
         files = os.listdir(dl_dir)
         for filenm in files:
             if ".part" in filenm:
-                print(f"      *** Waiting for download: {filenm} ***")
+                print(f"            *** Waiting for download: {filenm} ***")
                 time.sleep(DUR_WAIT_UTL)
                 complete = False
 
@@ -202,7 +202,7 @@ def clean_download_dir() -> None:
         for pth in dir_cnts:
             full_pth = os.path.join(dl_dir, pth)
             if os.path.isfile(full_pth):
-                print("  -- deleting", pth, "from", dl_dir)
+                print("    -- deleting", pth, "from", dl_dir)
                 os.remove(full_pth)
         print("Download directory is now empty.")
 
@@ -234,7 +234,7 @@ def process_download(save_to: str, boxx_site: str, save_filename: str) -> None:
     # ALTERNATE POSSIBILITY WOULD BE TO LOG THE PROBLEM AND CONTINUE
     # ON TO THE NEXT FILE.
     if dl_cnt != 1:
-        print(f"    DOWNLOADING ERROR. {dl_cnt} FILES FOUND (1 expected)")
+        print(f"        DOWNLOADING ERROR. {dl_cnt} FILES FOUND (1 expected)")
         print_error(f"FAIL: {boxx_site.upper()} {save_to} {save_filename}")
 
         # Maybe: track files that could not be downloaded to inform
@@ -246,13 +246,13 @@ def process_download(save_to: str, boxx_site: str, save_filename: str) -> None:
     # THE PERMANENT STORAGE LOCATION WHICH WILL LEAVE THE DOWNLOAD
     # DIRECTORY EMPTY AGAIN.
     else:
-        print("      - Moving download to " +
+        print("            - Moving download to " +
                     f"{build_save_location(boxx_site, save_to, save_filename)}"
               )
         rename_and_move_dl_file(save_to, boxx_site, save_filename)
 
 
-def download_item_files(browser: webdriver, url: str, boxx_site: str, item_name: str) -> None:
+def download_item_files(browser: webdriver, url: str, boxx_site: str, item_name: str, file: str) -> None:
     """
     Download all files from the current "item".
         I know the function is kinda long, but IO tends to do that.
@@ -263,6 +263,10 @@ def download_item_files(browser: webdriver, url: str, boxx_site: str, item_name:
     param item_name: the name of this item which becomes the name of the directory to
                     save the file(s) into.
     """
+    # SKIP ALL FILES UNTIL THIS STRING APPEARS IN THE NAME OF
+    # THE FILE TO DOWNLOAD (NONE = SKIP NONE)
+    first_file_contains: str = file
+
     # POINT THE BROWSER AT THE PROPER PAGE TO DOWNLOAD FILES FOR
     # THE PURCHASE WE ARE PROCESSING.
     browser.get(url)
@@ -281,6 +285,16 @@ def download_item_files(browser: webdriver, url: str, boxx_site: str, item_name:
         # ONCE CLICKED, A LIST OF DOWNLOADS FOR THIS MEMBER OF OUR PURCHASE
         # WILL BE LISTED.
         dl_img = dl_elem.find_element(By.TAG_NAME, "svg")
+
+        # SKIP FILES AS LONG AS FIRST_FILE_CONTAINS HAS A VALUE
+        if first_file_contains is not None:
+            # IF WE MATCH REMOVE FILTER
+            if first_file_contains in ttl:
+                first_file_contains = None
+            # IF WE DON'T MATCH, KEEP ON SKIPPING
+            else:
+                print(f"            {first_file_contains} not found in {ttl}.  -SKIPPED-")
+                continue
 
         # CLICK BUTTON TO BRING UP DOWNLOADS FOR ITEM MEMBER
         dl_img.click()
@@ -305,7 +319,7 @@ def download_item_files(browser: webdriver, url: str, boxx_site: str, item_name:
 
             # DOWNLOAD EACH FILE FOR THIS ITEM MEMBER
             for filename, elem in sorted(downloads):
-                print(f"    Downloading: {filename} ...")
+                print(f"        Downloading: {filename} ...")
                 if not file_exists(boxx_site, item_name, filename):
                     # THE FILE WAS NOT PREVIOUSLY DOWNLOADED, SO
                     # CLICK TO DOWNLOAD THE FILE THEN PROCESS IT
@@ -317,19 +331,26 @@ def download_item_files(browser: webdriver, url: str, boxx_site: str, item_name:
                 else:
                     # THE FILE HAS ALREADY BEEN DOWNLOADED.  HOORAY!
                     # WE CAN MOVE ON THE THE NEXT FILE.
-                    print("      - already exists, skipping download.")
+                    print("            - already exists, skipping download.")
 
         # THIS ITEM MEMBER ONLY HAS A SINGLE FILE TO DOWNLOAD
         else:
             filename = f"{ttl}-{cnt_name}-{dur}"
-            print(f"    Downloading single: {filename} ...")
+            print(f"        Downloading single: {filename} ...")
 
             if not file_exists(boxx_site, item_name, filename):
                 process_download(item_name, boxx_site, filename)
 
             else:
                 # FILE PREVIOUSLY DOWNLOADED, SKIP TO NEXT FILE.
-                print("      - already exists, skipping single download.")
+                print("            - already exists, skipping single download.")
+
+
+def clean(file_name: str) -> str:
+    """ REMOVE PROBLEMATIC CHARACTERS FROM FILENAMES. """
+    return file_name.replace("%", "") \
+                    .replace("/", "") \
+                    .replace("\\", "")
 
 
 def build_save_location(boxx_site: str, item_name: str, save_file: str) -> str:
@@ -355,10 +376,7 @@ def build_save_location(boxx_site: str, item_name: str, save_file: str) -> str:
     dst_dir = get_save_dir(boxx_site, item_name)
 
     # REMOVE PROBLEMATIC CHARACTERS FROM FILENAMES.
-    clean_save_file = save_file.replace("%", "")\
-                            .replace("/", "")\
-                            .replace("\\", "")
-
+    clean_save_file = clean(save_file)
     # RETURN THE FULL PATH TO STORE THE FILE
     return os.path.join(dst_dir, clean_save_file) + file_ext
 
@@ -470,7 +488,7 @@ def file_exists(boxx_site: str, item: str, filename: str) -> bool:
                 need to be downloaded).
     """
     dst_dir = get_save_dir(boxx_site, item)
-    path = os.path.join(dst_dir, filename) + ".*"
+    path = os.path.join(dst_dir, clean(filename)) + ".*"
     filenames = glob.glob(path)
     return len(filenames) > 0
 
@@ -490,12 +508,13 @@ def get_save_dir(boxx_site: str, item: str) -> str:
 def usage() -> None:
     """ Display simple usage to stdout and exit program. """
     print("USAGE:")
-    print("  boxx-download.bash [site] [product]")
+    print("    boxx-download.bash [site] [product] [file]")
     print()
     print("EXAMPLES:")
-    print("  boxx-download.bash")
-    print("  boxx-download.bash title-boxx")
-    print("  boxx-download.bash busy-boxx 005-modern-titles")
+    print("    boxx-download.bash")
+    print("    boxx-download.bash title-boxx")
+    print("    boxx-download.bash busy-boxx 005-modern-titles")
+    print("    boxx-download.bash busy-boxx 005-modern-titles 47")
     print()
     sys.exit(1)
 
@@ -518,21 +537,23 @@ def verify_boxx_site(site: str) -> None:
         usage()
 
 
-def read_command_line() -> (str, str):
+def read_command_line() -> (str, str, str):
     """
     Parse and verify the command line arguments looking for a
     site and item provided by the user.
 
     If the command line is invalid, print usage and quit program.
 
-    return: A pair of the site and item provided on the command-line.
+    return: A triple of the site, item, and file number
+                provided on the command-line.
                 None indicates the user did not provide a
                 value and wants them all.
     """
     site = None
     item = None
+    file  = None
 
-    if len(sys.argv) > 3:
+    if len(sys.argv) > 5:
         print("Too many command line arguments.")
         print()
         usage()
@@ -541,15 +562,17 @@ def read_command_line() -> (str, str):
         site = sys.argv[1]
         verify_boxx_site(site)
 
-    if len(sys.argv) == 3:
+    if len(sys.argv) >= 3:
         item = sys.argv[2]
 
-    return (site, item)
+    if len(sys.argv) == 4:
+        file = sys.argv[3]
+
+    return (site, item, file)
 
 
 def filter_items(all_item_pgs: [(str, str)], valid_items: [str]) -> [(str,str)]:
     """
-
     param all_item_pgs: the list of possible items for the user to
                 download (read from the websites downloads page)
     param valid_items: list of items the user wants to download
@@ -570,7 +593,7 @@ def main():
     """
     Main program starts here.
     """
-    site, cmdln_item = read_command_line()
+    site, cmdln_item, file = read_command_line()
 
     # EMPTY THE DOWNLOAD DIR FOR A CLEAN START
     clean_download_dir()
@@ -597,11 +620,11 @@ def main():
 
         # DOWNLOAD THE FILES FOR EACH ITEM
         for (url, item) in pgs:
-            print(f"  Follow link to detail page for {item}")
+            print(f"    Follow link to detail page for {item}")
             if cmdln_item is not None or not ensure_save_dir_exists(boxx_site, item):
-                print(f"    *** Download url: {url} ***")
-                print(f"    *** Save to: {get_save_dir(boxx_site, item)} ***")
-                download_item_files(browser, url, boxx_site, item)
+                print(f"        *** Download url: {url} ***")
+                print(f"        *** Save to: {get_save_dir(boxx_site, item)} ***")
+                download_item_files(browser, url, boxx_site, item, file)
 
             else:
                 print(f"    --- Skip {get_save_dir(boxx_site, item)} - previously downloaded.")
