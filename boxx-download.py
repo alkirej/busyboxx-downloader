@@ -346,6 +346,13 @@ def download_item_files(browser: webdriver, url: str, boxx_site: str, item_name:
                 print("            - already exists, skipping single download.")
 
 
+def clean(file_name: str) -> str:
+    """ REMOVE PROBLEMATIC CHARACTERS FROM FILENAMES. """
+    return file_name.replace("%", "") \
+                    .replace("/", "") \
+                    .replace("\\", "")
+
+
 def build_save_location(boxx_site: str, item_name: str, save_file: str) -> str:
     """
     Generate the final resting place and name of the downloaded file.
@@ -369,10 +376,7 @@ def build_save_location(boxx_site: str, item_name: str, save_file: str) -> str:
     dst_dir = get_save_dir(boxx_site, item_name)
 
     # REMOVE PROBLEMATIC CHARACTERS FROM FILENAMES.
-    clean_save_file = save_file.replace("%", "")\
-                            .replace("/", "")\
-                            .replace("\\", "")
-
+    clean_save_file = clean(save_file)
     # RETURN THE FULL PATH TO STORE THE FILE
     return os.path.join(dst_dir, clean_save_file) + file_ext
 
@@ -484,7 +488,7 @@ def file_exists(boxx_site: str, item: str, filename: str) -> bool:
                 need to be downloaded).
     """
     dst_dir = get_save_dir(boxx_site, item)
-    path = os.path.join(dst_dir, filename) + ".*"
+    path = os.path.join(dst_dir, clean(filename)) + ".*"
     filenames = glob.glob(path)
     return len(filenames) > 0
 
