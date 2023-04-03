@@ -80,7 +80,7 @@ def login(browser: webdriver, boxx_site: str) -> None:
         print("    Please set to the password associated with your Boxx account(s).")
         sys.exit(1)
 
-    # SIGN USER INTO THE SITE BY CLICKING THE SIGN IN BUTTON
+    # SIGN USER INTO THE SITE BY CLICKING THE SIGN-IN BUTTON
     login_btn = browser.find_element(By.ID, "SignInButton")
     login_btn.click()
     time.sleep(DUR_BETW_PGS)
@@ -127,7 +127,8 @@ def get_item_download_pages(browser: webdriver) -> [(str, str)]:
     elems = browser.find_elements(By.CLASS_NAME, "contentsToDisplay")
     for elem in elems:
         volume = int(elem.find_element(By.CLASS_NAME, "ContentExtraInfoSuperTitle").text
-                     .replace("VOLUME ", "").replace(":", "")
+                         .replace("VOLUME ", "")
+                         .replace(":", "")
                      )
         item = elem.find_element(By.CLASS_NAME, "TitleText").text.lower().replace(" ", "-")
         item_names.append(f"{volume:03d}-{item}")
@@ -198,8 +199,8 @@ def clean_download_dir() -> None:
         print("Empty the download directory. (", dl_dir, ")")
 
         # FIND ALL FILES IN THE DOWNLOAD DIRECTORY AND DELETE THEM.
-        dir_cnts = os.listdir(dl_dir)
-        for pth in dir_cnts:
+        dir_counts = os.listdir(dl_dir)
+        for pth in dir_counts:
             full_pth = os.path.join(dl_dir, pth)
             if os.path.isfile(full_pth):
                 print("    -- deleting", pth, "from", dl_dir)
@@ -246,8 +247,8 @@ def process_download(save_to: str, boxx_site: str, save_filename: str) -> None:
     # THE PERMANENT STORAGE LOCATION WHICH WILL LEAVE THE DOWNLOAD
     # DIRECTORY EMPTY AGAIN.
     else:
-        print("            - Moving download to " +
-                    f"{build_save_location(boxx_site, save_to, save_filename)}"
+        print("            - Moving download to "
+              + f"{build_save_location(boxx_site, save_to, save_filename)}"
               )
         rename_and_move_dl_file(save_to, boxx_site, save_filename)
 
@@ -265,7 +266,7 @@ def download_item_files(browser: webdriver, url: str, boxx_site: str, item_name:
     """
     # SKIP ALL FILES UNTIL THIS STRING APPEARS IN THE NAME OF
     # THE FILE TO DOWNLOAD (NONE = SKIP NONE)
-    first_file_contains: str = file
+    first_file_contains: str | None = file
 
     # POINT THE BROWSER AT THE PROPER PAGE TO DOWNLOAD FILES FOR
     # THE PURCHASE WE ARE PROCESSING.
@@ -323,14 +324,14 @@ def download_item_files(browser: webdriver, url: str, boxx_site: str, item_name:
                 if not file_exists(boxx_site, item_name, filename):
                     # THE FILE WAS NOT PREVIOUSLY DOWNLOADED, SO
                     # CLICK TO DOWNLOAD THE FILE THEN PROCESS IT
-                    # (AKA: MOVE IT TO ITS PERMENANT LOCATION)
+                    # (AKA: MOVE IT TO ITS PERMANENT LOCATION)
                     elem.click()
                     time.sleep(2)
                     process_download(item_name, boxx_site, filename)
 
                 else:
                     # THE FILE HAS ALREADY BEEN DOWNLOADED.  HOORAY!
-                    # WE CAN MOVE ON THE THE NEXT FILE.
+                    # WE CAN MOVE ON THE NEXT FILE.
                     print("            - already exists, skipping download.")
 
         # THIS ITEM MEMBER ONLY HAS A SINGLE FILE TO DOWNLOAD
@@ -360,7 +361,7 @@ def build_save_location(boxx_site: str, item_name: str, save_file: str) -> str:
         directory, AND this is the most recent download that will
         be saved elsewhere.
 
-    param boxx_site: The specifix busy-boxx site (and product type)
+    param boxx_site: The specific busy-boxx site (and product type)
     param item_name: Name of the purchased item
     param save_file: Base name for the file when it is renamed.
     return: The full path to save the file into permanently.
@@ -381,7 +382,7 @@ def build_save_location(boxx_site: str, item_name: str, save_file: str) -> str:
     return os.path.join(dst_dir, clean_save_file) + file_ext
 
 
-def get_downloaded_filename() -> str:
+def get_downloaded_filename() -> str | None:
     """
     Look into the browser's download directory (check the .ini file
     for "download-dir" in the "DIRECTORIES" section) and return the
@@ -389,7 +390,7 @@ def get_downloaded_filename() -> str:
     single file.
 
     return: The filename of the file in the download dir OR None
-                if it empty for some reason.
+                if it is empty for some reason.
     """
     # FIND BROWSER'S DOWNLOAD DIR
     dl_dir = CONFIG.get(SECTION_DIRS, "download-dir")
@@ -452,6 +453,9 @@ def start_browser() -> webdriver:
 
     # THIS ONE SPECIFIES THE DIRECTORY
     opts.set_preference("browser.download.dir", dl_dir)
+
+    # ALWAYS DOWNLOAD .MP4 FILES.
+    opts.set_preference("media.play-stand-alone", False)
 
     # START THE BROWSER AND RETURN THE OBJECT FOR FUTURE INTERACTIONS
     return webdriver.Firefox(options=opts)
@@ -551,7 +555,7 @@ def read_command_line() -> (str, str, str):
     """
     site = None
     item = None
-    file  = None
+    file = None
 
     if len(sys.argv) > 5:
         print("Too many command line arguments.")
@@ -568,10 +572,10 @@ def read_command_line() -> (str, str, str):
     if len(sys.argv) == 4:
         file = sys.argv[3]
 
-    return (site, item, file)
+    return site, item, file
 
 
-def filter_items(all_item_pgs: [(str, str)], valid_items: [str]) -> [(str,str)]:
+def filter_items(all_item_pgs: [(str, str)], valid_items: [str]) -> [(str, str)]:
     """
     param all_item_pgs: the list of possible items for the user to
                 download (read from the websites downloads page)
@@ -630,6 +634,7 @@ def main():
                 print(f"    --- Skip {get_save_dir(boxx_site, item)} - previously downloaded.")
 
     browser.quit()
+
 
 if "__main__" == __name__:
     main()
